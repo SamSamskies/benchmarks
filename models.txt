@@ -1,0 +1,9 @@
+# Models to benchmark, one per line.
+# Lines starting with # and blank lines are ignored.
+# Use with:  ./benchmark.sh -f models.txt
+
+qwen3:latest
+gemma3:latest
+deepseek-r1:latest
+# gpt-oss:latest
+# qwen3-coder:30b
