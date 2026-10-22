@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Measured Flint generation throughput, individual benchmark runs, and the hardware and settings behind the results.">
+  <title>Flint | Benchmark lab</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>.hero-unit{letter-spacing:normal}@media(max-width:570px){.chart text{font-size:10px}.chart text.value-label{font-size:11px}}</style>
+  <script src="data.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to results</a>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Flint Benchmark lab home">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 30 13 10 27 5 33 20 23 35Z" fill="currentColor"/><path d="m13 10 10 12 4-17M8 30l15-8 10-2m-10 2v13" stroke="white" stroke-width="1.7" fill="none"/></svg>
+      <span>Flint <span class="brand-sub">/ Benchmark lab</span></span>
+    </a>
+    <span class="snapshot-label"><span class="snapshot-dot"></span>Saved measurements</span>
+  </header>
+
+  <main id="main" class="workspace">
+    <aside class="sidebar" aria-label="Benchmark environment">
+      <div class="model-mark" aria-hidden="true"><svg viewBox="0 0 120 120"><path d="m23 87 15-58 43-14 17 45-29 45Z" fill="#375dfb"/><path d="m38 29 31 36 12-50M23 87l46-22 29-5m-29 5v40" stroke="#dbe3ff" stroke-width="2" fill="none"/></svg></div>
+      <h1 id="model-name">Flint</h1>
+      <p class="model-tag" id="model-tag">Ollama generation benchmark</p>
+      <div class="badges"><span id="runner">—</span><span id="quantization">—</span></div>
+      <div class="environment">
+        <h2>Test machine</h2>
+        <p id="chip">—</p>
+        <dl class="machine-specs">
+          <div><dt>Memory</dt><dd id="memory">—</dd></div>
+          <div><dt>GPU cores</dt><dd id="gpu">—</dd></div>
+          <div><dt>Ollama</dt><dd id="version">—</dd></div>
+          <div><dt>System</dt><dd id="os">—</dd></div>
+        </dl>
+      </div>
+      <div class="scope-note"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8m-4-4v4"/></svg><p>Measured on this machine.<br>Other hardware may differ.</p></div>
+    </aside>
+
+    <div class="main-column">
+      <section class="page-heading" aria-labelledby="page-title">
+        <div><h2 id="page-title">How fast does Flint generate?</h2><p>Generation speed, measured one run at a time.</p></div>
+        <label class="import-button" for="import-file"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 16V3m-4 4 4-4 4 4M4 15v5h16v-5"/></svg>Import results<input id="import-file" type="file" accept=".json,application/json"></label>
+      </section>
+
+      <div class="run-toolbar">
+        <label for="run-select">Benchmark</label><select id="run-select" aria-label="Select saved benchmark"></select>
+        <span id="run-status" class="status">Loading results</span>
+      </div>
+      <p id="message" class="message" role="status" aria-live="polite" hidden></p>
+
+      <section class="results-panel" aria-label="Generation throughput results">
+        <div class="headline-result">
+          <div class="average-block"><h3>Average generation speed</h3><p class="hero-number"><span id="average">—</span><span class="hero-unit">tokens/sec</span></p><p id="result-caption">Loading saved measurements…</p></div>
+          <dl class="result-facts"><div><dt>Observed range</dt><dd id="range">—</dd></div><div><dt>Timed runs</dt><dd id="run-count">—</dd></div><div><dt>Generated per run</dt><dd id="token-count">—</dd></div></dl>
+        </div>
+        <div class="chart-heading"><div><h3>Every timed run</h3><p id="chart-subtitle">The warmup is excluded from these results.</p></div><div class="segmented" role="group" aria-label="Chart metric"><button type="button" id="speed-view" aria-pressed="true">Speed</button><button type="button" id="tokens-view" aria-pressed="false">Tokens</button></div></div>
+        <div id="chart" class="chart" aria-label="Per-run benchmark chart"></div>
+        <div class="chart-legend"><span class="legend-dot"></span><span id="legend-label">Generation throughput</span><span class="mean-key" aria-hidden="true"></span><span id="mean-label">Average</span></div>
+      </section>
+
+      <div class="lower-grid">
+        <section class="samples-section" aria-labelledby="samples-title"><div class="section-heading"><h3 id="samples-title">Run details</h3><button class="text-button" id="download-csv" type="button">Download CSV</button></div><div class="table-wrap"><table><thead><tr><th scope="col">Run</th><th scope="col">Tokens/sec</th><th scope="col">Tokens</th><th scope="col">Result</th></tr></thead><tbody id="sample-rows"></tbody></table></div><p class="small-note">Reported speeds are rounded to two decimal places.</p></section>
+        <section class="method-section" aria-labelledby="method-title"><h3 id="method-title">What this measures</h3><p>How quickly Flint produces tokens after loading and prompt processing.</p><div class="formula">Generated tokens <span>÷</span> Generation time</div><p class="small-note">Model loading, time to first token, total response time, and answer quality are outside this measurement.</p></section>
+      </div>
+
+      <details class="configuration"><summary>Settings & reproducibility <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="configuration-body"><dl id="settings" class="settings-grid"></dl><h4>Prompt</h4><p id="prompt" class="prompt-text"></p><h4>Model digest</h4><code id="digest"></code><p id="comparison-note" class="small-note">Compare runs using matching hardware, model digests, prompts, and settings. A few timed runs describe observed variation, not statistical significance.</p><div class="detail-actions"><button id="download-log" type="button" class="text-button">Download run log</button><button id="download-context" type="button" class="text-button">Download context</button><button id="download-json" type="button" class="text-button">Export JSON</button></div></div></details>
+
+      <footer><p id="measurement-date">Saved benchmark</p><p>Ollama Benchmark Lab</p></footer>
+    </div>
+  </main>
+</body>
+</html>

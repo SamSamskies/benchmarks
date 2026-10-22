@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ollama Benchmark"
+  short_description: "Run and compare local Ollama speed benchmarks"
+  default_prompt: "Use $ollama-benchmark to benchmark my installed Ollama models and save the results."
