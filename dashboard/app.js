@@ -124,16 +124,23 @@
     return { max: niceMax, ticks };
   }
 
+  function entryKey(model) {
+    return model.entry_id || model.model;
+  }
+
   function showTooltip(evt, model, metrics) {
     const tip = document.getElementById("chart-tooltip");
     tip.innerHTML = "";
-    tip.appendChild(el("div", { class: "tooltip-title" }, model.model));
+    tip.appendChild(el("div", { class: "tooltip-title" }, model.display_name || model.model));
 
     const rows = [
       ["Score", `${metrics.score.toFixed(1)} / 100 (${metrics.checksPassed}/${metrics.checksTotal})`],
       ["Time / Task", `${metrics.time.toFixed(2)}s`],
       ["Decode Speed", `${metrics.tps.toFixed(1)} tok/s`],
     ];
+    if (model.think_level) {
+      rows.push(["Thinking", model.think_level]);
+    }
     if (model.model_info?.parameter_size) {
       rows.push(["Size / Quant", `${model.model_info.parameter_size} · ${model.model_info.quantization_level || "—"}`]);
     }
@@ -187,7 +194,7 @@
       .sort((a, b) => {
         const diff = a.metrics[metricKey] - b.metrics[metricKey];
         if (Math.abs(diff) > 1e-9) return sortDesc ? -diff : diff;
-        return collator.compare(a.model.model, b.model.model);
+        return collator.compare(entryKey(a.model), entryKey(b.model));
       });
 
     const rawMax = Math.max(...items.map((it) => it.metrics[metricKey]), 0);
@@ -196,8 +203,8 @@
       : niceMaxAndTicks(rawMax, 4);
 
     const n = items.length;
-    const chartWidth = Math.max(520, n * 84 + 90);
-    const margin = { top: 20, right: 20, bottom: 112, left: 42 };
+    const chartWidth = Math.max(540, n * 96 + 80);
+    const margin = { top: 20, right: 20, bottom: n <= 3 ? 112 : 132, left: 42 };
     const plotW = chartWidth - margin.left - margin.right;
     const plotH = 225;
     const chartHeight = margin.top + plotH + margin.bottom;
@@ -247,13 +254,14 @@
       const by = margin.top + plotH - barH;
       const color = model.brand?.color || "#6d4aff";
 
-      const isDimmed = state.highlightedModel && state.highlightedModel !== model.model;
-      const isHi = state.highlightedModel === model.model;
+      const key = entryKey(model);
+      const isDimmed = state.highlightedModel && state.highlightedModel !== key;
+      const isHi = state.highlightedModel === key;
       const group = svgEl("g", {
         class: `bar-group${isDimmed ? " dimmed" : ""}${isHi ? " highlighted" : ""}`,
         tabindex: "0",
         role: "button",
-        "aria-label": `${model.model}: ${valueFormatter(val)}`,
+        "aria-label": `${model.display_name || model.model}: ${valueFormatter(val)}`,
       });
 
       const barPath = svgEl("path", {
@@ -309,9 +317,10 @@
         )
       );
 
-      // Model label below badge (tilted gently when many models, clean two-line when <= 5)
+      // Model label below badge (two-line upright when <= 3, tilted -36deg when >= 4 to prevent collisions)
       const labelY = badgeY + badgeSize + 15;
-      if (n <= 5) {
+      const labelBase = model.display_base || model.base_name;
+      if (n <= 3) {
         group.appendChild(
           svgEl(
             "text",
@@ -321,7 +330,7 @@
               "text-anchor": "middle",
               class: "bar-model-label",
             },
-            model.base_name
+            labelBase
           )
         );
         if (model.tag_name) {
@@ -345,10 +354,10 @@
             x: cx + 4,
             y: labelY,
             "text-anchor": "end",
-            transform: `rotate(-38 ${cx + 4} ${labelY})`,
+            transform: `rotate(-36 ${cx + 4} ${labelY})`,
             class: "bar-model-label",
           },
-          model.model
+          labelBase
         );
         group.appendChild(tilted);
       }
@@ -356,11 +365,11 @@
       group.addEventListener("mouseenter", (e) => showTooltip(e, model, metrics));
       group.addEventListener("mousemove", positionTooltip);
       group.addEventListener("mouseleave", hideTooltip);
-      group.addEventListener("click", () => toggleHighlight(model.model));
+      group.addEventListener("click", () => toggleHighlight(key));
       group.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          toggleHighlight(model.model);
+          toggleHighlight(key);
         }
       });
 
@@ -470,18 +479,45 @@
       svg.appendChild(svgEl("path", { d, class: "frontier-line" }));
     }
 
+    const pointNodes = new Map();
+    const legendNodes = new Map();
+
+    function setHoverPreview(targetKey) {
+      const activeKey = targetKey ?? state.highlightedModel;
+      for (const [k, node] of pointNodes.entries()) {
+        node.classList.toggle("dimmed", Boolean(activeKey && activeKey !== k));
+        node.classList.toggle("highlighted", activeKey === k);
+      }
+      for (const [k, btn] of legendNodes.entries()) {
+        btn.classList.toggle("dimmed", Boolean(activeKey && activeKey !== k));
+        btn.classList.toggle("highlighted", activeKey === k);
+      }
+    }
+
     for (const { model, metrics } of points) {
+      const key = entryKey(model);
       const px = margin.left + (metrics.time / xScale.max) * plotW;
       const py = margin.top + plotH - (metrics.score / 100) * plotH;
       const color = model.brand?.color || "#6d4aff";
-      const isDimmed = state.highlightedModel && state.highlightedModel !== model.model;
+      const isDimmed = state.highlightedModel && state.highlightedModel !== key;
+      const isHi = state.highlightedModel === key;
+      const isHighRing = model.think_level === "high" || model.think_level === "xhigh" || model.think_level === "max";
 
       const g = svgEl("g", {
-        class: `frontier-point${isDimmed ? " dimmed" : ""}`,
+        class: `frontier-point${isDimmed ? " dimmed" : ""}${isHi ? " highlighted" : ""}`,
         tabindex: "0",
         role: "button",
-        "aria-label": `${model.model}: score ${metrics.score}, time ${metrics.time}s`,
+        "aria-label": `${model.display_name || model.model}: score ${metrics.score}, time ${metrics.time}s`,
       });
+      g.appendChild(
+        svgEl("circle", {
+          cx: px,
+          cy: py,
+          r: 14,
+          stroke: color,
+          class: "frontier-halo",
+        })
+      );
       g.appendChild(
         svgEl("circle", {
           cx: px,
@@ -491,31 +527,93 @@
           class: "frontier-dot",
         })
       );
-
-      const anchorRight = px > margin.left + plotW * 0.65;
-      const labelY = py < margin.top + 22 ? py + 20 : py - 12;
+      if (isHighRing) {
+        g.appendChild(
+          svgEl("circle", {
+            cx: px,
+            cy: py,
+            r: 4,
+            class: "frontier-inner-ring",
+          })
+        );
+      }
       g.appendChild(
-        svgEl(
-          "text",
-          {
-            x: anchorRight ? px - 10 : px + 10,
-            y: labelY,
-            "text-anchor": anchorRight ? "end" : "start",
-            class: "frontier-label",
-          },
-          model.base_name
-        )
+        svgEl("circle", {
+          cx: px,
+          cy: py,
+          r: 16,
+          class: "frontier-hit",
+        })
       );
 
-      g.addEventListener("mouseenter", (e) => showTooltip(e, model, metrics));
+      g.addEventListener("mouseenter", (e) => {
+        showTooltip(e, model, metrics);
+        setHoverPreview(key);
+      });
       g.addEventListener("mousemove", positionTooltip);
-      g.addEventListener("mouseleave", hideTooltip);
-      g.addEventListener("click", () => toggleHighlight(model.model));
+      g.addEventListener("mouseleave", () => {
+        hideTooltip();
+        setHoverPreview(null);
+      });
+      g.addEventListener("click", () => toggleHighlight(key));
+      g.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          toggleHighlight(key);
+        }
+      });
 
+      pointNodes.set(key, g);
       svg.appendChild(g);
     }
 
     container.appendChild(svg);
+
+    const legend = el("div", { class: "frontier-legend", role: "group", "aria-label": "Frontier chart legend" });
+    const sortedLegend = [...points].sort((a, b) => {
+      const diff = b.metrics.score - a.metrics.score;
+      if (Math.abs(diff) > 1e-9) return diff;
+      return a.metrics.time - b.metrics.time;
+    });
+    for (const { model, metrics } of sortedLegend) {
+      const key = entryKey(model);
+      const color = model.brand?.color || "#6d4aff";
+      const isDimmed = state.highlightedModel && state.highlightedModel !== key;
+      const isHi = state.highlightedModel === key;
+      const isHighRing = model.think_level === "high" || model.think_level === "xhigh" || model.think_level === "max";
+
+      const btn = el("button", {
+        type: "button",
+        class: `frontier-legend-item${isDimmed ? " dimmed" : ""}${isHi ? " highlighted" : ""}`,
+        "aria-pressed": isHi ? "true" : "false",
+      });
+      btn.appendChild(
+        el("span", {
+          class: `frontier-legend-swatch${isHighRing ? " ringed" : ""}`,
+          style: isHighRing ? `color:${color};background:${color}` : `background:${color}`,
+          "aria-hidden": "true",
+        })
+      );
+      btn.appendChild(el("span", { class: "frontier-legend-name" }, model.display_base || model.base_name));
+      btn.appendChild(
+        el(
+          "span",
+          { class: "frontier-legend-stats" },
+          `${metrics.score.toFixed(1)} · ${formatSeconds(metrics.time)}`
+        )
+      );
+
+      btn.addEventListener("mouseenter", () => setHoverPreview(key));
+      btn.addEventListener("mouseleave", () => setHoverPreview(null));
+      btn.addEventListener("focus", () => setHoverPreview(key));
+      btn.addEventListener("blur", () => setHoverPreview(null));
+      btn.addEventListener("click", () => toggleHighlight(key));
+
+      legendNodes.set(key, btn);
+      legend.appendChild(btn);
+    }
+
+    container.appendChild(legend);
   }
 
   function renderCharts() {
@@ -643,9 +741,10 @@
     }
 
     for (const model of state.data.models || []) {
-      const tr = el("tr", { "data-model": model.model });
+      const key = entryKey(model);
+      const tr = el("tr", { "data-model": key });
 
-      const rowHead = el("th", { scope: "row", "data-value": model.model });
+      const rowHead = el("th", { scope: "row", "data-value": model.display_name || model.model });
       const cellWrap = el("div", { class: "model-cell" });
       cellWrap.appendChild(
         el(
@@ -659,7 +758,7 @@
         )
       );
       const textWrap = el("div", { class: "model-cell-text" });
-      textWrap.appendChild(el("span", { class: "model-cell-name" }, model.base_name));
+      textWrap.appendChild(el("span", { class: "model-cell-name" }, model.display_base || model.base_name));
       const subParts = [model.tag_name, model.model_info?.quantization_level].filter(Boolean);
       textWrap.appendChild(el("span", { class: "model-cell-sub" }, subParts.join(" · ") || model.model));
       cellWrap.appendChild(textWrap);
@@ -708,7 +807,7 @@
         const btn = el("button", {
           type: "button",
           class: "task-score-btn",
-          "aria-label": `Inspect ${model.model} on ${taskDef.title}: score ${score} in ${sec}s`,
+          "aria-label": `Inspect ${model.display_name || model.model} on ${taskDef.title}: score ${score} in ${sec}s`,
         });
         btn.appendChild(el("span", { class: `score-pill ${scoreClass(score)}` }, `${score.toFixed(0)}`));
         btn.appendChild(el("span", { class: "score-time" }, formatSeconds(sec)));
@@ -815,6 +914,9 @@
     const badges = document.getElementById("modal-badges");
     badges.innerHTML = "";
     badges.appendChild(el("span", { class: "modal-chip" }, model.model));
+    if (model.think_level) {
+      badges.appendChild(el("span", { class: "modal-chip" }, `think: ${model.think_level}`));
+    }
     badges.appendChild(el("span", { class: "modal-chip" }, taskDef.category));
 
     document.getElementById("modal-title").textContent = taskDef.title;
@@ -873,9 +975,14 @@
 
     const firstModel = data.models?.[0];
     const hw = firstModel?.hardware || {};
+    const uniqueModels = new Set((data.models || []).map((m) => m.model)).size;
+    const countLabel =
+      uniqueModels === data.models.length
+        ? `${data.models.length} model${data.models.length === 1 ? "" : "s"}`
+        : `${uniqueModels} models · ${data.models.length} configs`;
     const items = [
       `Suite v${data.suite_version}`,
-      `${data.models.length} model${data.models.length === 1 ? "" : "s"}`,
+      countLabel,
     ];
     if (firstModel?.ollama_version) items.push(`Ollama ${firstModel.ollama_version}`);
     if (hw.memory_gb) items.push(`${hw.memory_gb} GB RAM`);

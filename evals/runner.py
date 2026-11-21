@@ -106,6 +106,10 @@ def _get_model_metadata(base_url: str, tag_entry: dict[str, Any], model_name: st
             context_length = v
             break
 
+    thinking_cfg = show_data.get("thinking") if isinstance(show_data, dict) else None
+    thinking_default = thinking_cfg.get("default") if isinstance(thinking_cfg, dict) else None
+    thinking_values = thinking_cfg.get("values", []) if isinstance(thinking_cfg, dict) else []
+
     size_bytes = tag_entry.get("size") if isinstance(tag_entry, dict) else None
     return {
         "digest": tag_entry.get("digest", "") if isinstance(tag_entry, dict) else "",
@@ -115,7 +119,35 @@ def _get_model_metadata(base_url: str, tag_entry: dict[str, Any], model_name: st
         "architecture": architecture,
         "context_length": context_length,
         "capabilities": show_data.get("capabilities", []) if isinstance(show_data, dict) else [],
+        "thinking_default": thinking_default,
+        "thinking_values": thinking_values,
     }
+
+
+def _resolve_think_label(
+    think_option: bool | str | None,
+    model_info: dict[str, Any],
+    task_results: list[dict[str, Any]],
+) -> str:
+    if think_option is True:
+        return "thinking"
+    if think_option is False:
+        return "off"
+    if isinstance(think_option, str) and think_option.strip():
+        return think_option.strip().lower()
+
+    default_val = model_info.get("thinking_default")
+    if default_val is True:
+        return "thinking"
+    if default_val is False:
+        return "off"
+    if isinstance(default_val, str) and default_val.strip():
+        return default_val.strip().lower()
+
+    caps = model_info.get("capabilities") or []
+    if "thinking" in caps and any(t.get("thinking") for t in task_results):
+        return "thinking"
+    return ""
 
 
 def _run_warmup(base_url: str, model_name: str, num_ctx: int, timeout: int) -> float:
@@ -352,7 +384,11 @@ def main(argv: list[str] | None = None) -> int:
             )
             task_results.append(res)
 
-        out_path = RESULTS_DIR / f"{_slugify_model(model_name)}.json"
+        think_label = _resolve_think_label(think_option, model_info, task_results)
+        file_stem = _slugify_model(model_name)
+        if think_label:
+            file_stem = f"{file_stem}__{_slugify_model(think_label)}"
+        out_path = RESULTS_DIR / f"{file_stem}.json"
         if args.tasks.strip() and out_path.exists():
             with out_path.open("r", encoding="utf-8") as f:
                 existing = json.load(f)
@@ -377,6 +413,7 @@ def main(argv: list[str] | None = None) -> int:
 
         record = {
             "model": model_name,
+            "think_level": think_label,
             "evaluated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "suite_version": SUITE_VERSION,
             "ollama_url": base_url,

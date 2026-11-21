@@ -39,7 +39,7 @@ Each model receives one short warmup call (excluded from task timings) and then 
 
 ### 3. Verify outputs and rebuild manually if needed
 
-- Per-model raw results and check-level grading are saved under `eval_results/<model-slug>.json`.
+- Per-run raw results and check-level grading are saved under `eval_results/<model-slug>__<think-level>.json` (keeping different thinking levels of the same model as separate dashboard entries).
 - `evals/runner.py` automatically rebuilds `dashboard/data.json` and `dashboard/data.js` via:
 
 ```bash

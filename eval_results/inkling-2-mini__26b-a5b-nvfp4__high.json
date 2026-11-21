@@ -489,5 +489,6 @@
         "extracted": "{\n  \"sales_email_binding\": false,\n  \"jan_gross_usd\": 6600,\n  \"feb_gross_usd\": 7650,\n  \"mar_gross_usd\": 8100,\n  \"feb_unexcused_downtime_minutes\": 140,\n  \"mar_unexcused_downtime_minutes\": 250,\n  \"feb_sla_credit_usd\": 765,\n  \"mar_sla_credit_usd\": 2025,\n  \"q1_total_credits_usd\": 2790,\n  \"q1_net_payable_usd\": 19560\n}"
       }
     }
-  ]
+  ],
+  "think_level": "high"
 }

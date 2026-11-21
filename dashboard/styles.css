@@ -451,21 +451,119 @@ th button:focus-visible,
   opacity: 0.55;
 }
 
+.frontier-point {
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.frontier-point.dimmed {
+  opacity: 0.24;
+}
+
+.frontier-halo {
+  fill: none;
+  stroke-width: 2.5;
+  opacity: 0;
+  pointer-events: none;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
 .frontier-dot {
   stroke: var(--bg-card);
   stroke-width: 2.5;
-  cursor: pointer;
+  pointer-events: none;
+  transform-box: fill-box;
+  transform-origin: center;
   transition: transform 0.15s ease;
 }
 
-.frontier-point:hover .frontier-dot {
-  transform: scale(1.16);
+.frontier-inner-ring {
+  fill: none;
+  stroke: var(--bg-card);
+  stroke-width: 1.75;
+  pointer-events: none;
 }
 
-.frontier-label {
-  fill: var(--text-primary);
-  font-size: 11.5px;
+.frontier-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.frontier-point:hover .frontier-dot,
+.frontier-point:focus-visible .frontier-dot,
+.frontier-point.highlighted .frontier-dot {
+  transform: scale(1.22);
+}
+
+.frontier-point:hover .frontier-halo,
+.frontier-point:focus-visible .frontier-halo,
+.frontier-point.highlighted .frontier-halo {
+  opacity: 0.4;
+  transform: scale(1.08);
+}
+
+.frontier-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.frontier-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.14s ease, background-color 0.14s ease, opacity 0.14s ease;
+}
+
+.frontier-legend-item:hover,
+.frontier-legend-item.highlighted {
+  border-color: var(--border-strong);
+  background: var(--bg-hover);
+}
+
+.frontier-legend-item.dimmed {
+  opacity: 0.45;
+}
+
+.frontier-legend-item:focus-visible {
+  outline: 2px solid var(--accent-intel);
+  outline-offset: 2px;
+}
+
+.frontier-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex: none;
+}
+
+.frontier-legend-swatch.ringed {
+  box-shadow: inset 0 0 0 2px var(--bg-card);
+  border: 2px solid currentColor;
+}
+
+.frontier-legend-name {
   font-weight: 600;
+}
+
+.frontier-legend-stats {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Task Overview List */

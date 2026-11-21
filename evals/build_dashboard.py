@@ -61,6 +61,32 @@ def _split_model_name(model_name: str) -> tuple[str, str]:
     return model_name, ""
 
 
+def _normalize_think_val(val: Any) -> str:
+    if val is True:
+        return "thinking"
+    if val is False:
+        return "off"
+    if isinstance(val, str) and val.strip():
+        return val.strip().lower()
+    return ""
+
+
+def _infer_think_level(raw: dict[str, Any], info: dict[str, Any], tasks: list[dict[str, Any]]) -> str:
+    explicit = _normalize_think_val(raw.get("think_level"))
+    if explicit:
+        return explicit
+    opt_think = _normalize_think_val((raw.get("options") or {}).get("think"))
+    if opt_think:
+        return opt_think
+    default_think = _normalize_think_val(info.get("thinking_default"))
+    if default_think:
+        return default_think
+    caps = info.get("capabilities") or []
+    if "thinking" in caps and any(t.get("thinking") for t in tasks):
+        return "thinking"
+    return ""
+
+
 def _normalize_run(raw: dict[str, Any], source_file: str) -> dict[str, Any]:
     model_name = raw["model"]
     info = raw.get("model_info", {})
@@ -76,6 +102,10 @@ def _normalize_run(raw: dict[str, Any], source_file: str) -> dict[str, Any]:
         if item is not None:
             ordered_tasks.append(item)
 
+    think_level = _infer_think_level(raw, info, ordered_tasks)
+    entry_id = f"{model_name} ({think_level})" if think_level else model_name
+    display_base = f"{base_name} ({think_level})" if think_level else base_name
+
     scores = [float(t.get("grade", {}).get("score", 0.0)) for t in ordered_tasks]
     times = [float(t.get("inference_time_s", 0.0)) for t in ordered_tasks]
     tps_vals = [float(t.get("tokens_per_sec", 0.0)) for t in ordered_tasks if t.get("tokens_per_sec", 0.0) > 0]
@@ -88,9 +118,13 @@ def _normalize_run(raw: dict[str, Any], source_file: str) -> dict[str, Any]:
     perfect_count = sum(1 for s in scores if s >= 100.0)
 
     return {
+        "entry_id": entry_id,
         "model": model_name,
+        "think_level": think_level,
         "base_name": base_name,
         "tag_name": tag_name,
+        "display_base": display_base,
+        "display_name": entry_id,
         "brand": brand,
         "source_file": source_file,
         "evaluated_at_utc": raw.get("evaluated_at_utc", ""),
@@ -130,7 +164,7 @@ def build(results_dir: Path = RESULTS_DIR, dashboard_dir: Path = DASHBOARD_DIR) 
         key=lambda m: (
             -m["summary"]["intelligence_index"],
             m["summary"]["mean_time_per_task_s"],
-            m["model"],
+            m["entry_id"],
         )
     )
 

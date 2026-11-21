@@ -34,7 +34,7 @@ Add another model later and automatically update the dashboard:
 python3 evals/runner.py gemma4:26b-mlx
 ```
 
-Results are saved per model in `eval_results/<model-slug>.json`, and `dashboard/data.json` + `dashboard/data.js` are rebuilt automatically.
+Results are saved per model and thinking level in `eval_results/<model-slug>__<think-level>.json`, and `dashboard/data.json` + `dashboard/data.js` are rebuilt automatically so multiple thinking levels of the same model appear side-by-side on the charts.
 
 ### Runner options
 
