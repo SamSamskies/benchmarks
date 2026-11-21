@@ -13,12 +13,12 @@ Measures both accuracy and inference latency across **6 realistic tasks** (10 au
 
 | Task ID | Label | Category | What It Tests |
 | --- | --- | --- | --- |
-| `code-rate-limiter` | Code | Algorithms & State | `TokenBucketLimiter` & `SlidingWindowLimiter` with atomic multi-cost, expiry boundaries, `retry_after`, and `reset` |
-| `debug-csv-aggregator` | Debug | Root-Cause Debugging | Fixing 5 bugs in a multi-currency ledger (`Decimal` rounding, UTC timezones, idempotency deduplication, refunds, numeric sort) |
-| `extract-incident-report` | Extract | Structured Extraction | Turning noisy Slack/PagerDuty/email logs into UTC-normalized JSON without disproven hypotheses or PII |
-| `sql-saas-analytics` | SQL | Relational Analytics | Fan-out-safe SQLite query across `accounts`, `invoices`, and `usage_events` with zero-division handling |
-| `logic-release-schedule` | Planning | Constraint Satisfaction | Optimal 6-service deployment schedule under DAG, skill, availability, freeze-window, and concurrency constraints |
-| `spec-log-parser` | Parser | Spec Implementation | Reverse-proxy log parser handling IPv6 brackets, escaped quotes, `-` nulls, quoted metadata, and invalid-line rejection |
+| `trace-code-puzzles` | Tracing | Code Execution Tracing | Exact mental simulation across 10 Python snippets (closures, `finally`, `groupby`, lookahead regex, dict keys, rounding) |
+| `debug-async-cache` | Debug | Root-Cause Debugging | Fixing 6 interacting bugs in a byte-bounded LRU+TTL cache without a bug hint list |
+| `sql-cohort-sessions` | SQL | Relational Analytics | Gaps-and-islands web sessionization, 30-minute attribution windows, and conversion rates per country |
+| `algo-k-stops-routing` | Algorithms | Graph Algorithms | Fixing a visited-set Dijkstra bug for K-stop shortest paths across cycles, parallel edges, and 200-node graphs |
+| `logic-weighted-knapsack-dag` | Planning | Combinatorial Optimization | Optimal project subset under dual budgets (`eng_weeks <= 24`, `infra_cost <= 30`), DAG deps, exclusions, and compliance |
+| `synth-contract-audit` | Audit | Multi-Doc Synthesis | Reconciling MSA precedence, signed amendments, non-binding sales email, notice exclusions, and SLA credits |
 
 ### Quick start
 
@@ -41,9 +41,9 @@ Results are saved per model in `eval_results/<model-slug>.json`, and `dashboard/
 | Option | Description | Default |
 | --- | --- | --- |
 | `--url URL` | Ollama server URL | `$OLLAMA_HOST` or `http://127.0.0.1:11434` |
-| `--timeout SECONDS` | Per-task wall-clock deadline | `900` |
-| `--num-predict TOKENS` | Max output/thinking tokens per task | `24576` |
-| `--num-ctx TOKENS` | Context window size | `32768` |
+| `--timeout SECONDS` | Per-task wall-clock deadline | `480` |
+| `--num-predict TOKENS` | Max output/thinking tokens per task | `16384` |
+| `--num-ctx TOKENS` | Context window size | `24576` |
 | `--temperature FLOAT` | Override sampling temperature | model default |
 | `--think LEVEL` | Override Ollama `think` setting (`low`, `medium`, `high`, `true`, `false`) | model default |
 | `--tasks id1,id2` | Re-run a subset of tasks and merge into the model's saved JSON | all 6 tasks |

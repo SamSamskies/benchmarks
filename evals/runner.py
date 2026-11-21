@@ -257,10 +257,10 @@ def main(argv: list[str] | None = None) -> int:
         default=os.environ.get("OLLAMA_HOST") or "http://127.0.0.1:11434",
         help="Ollama base URL (default: $OLLAMA_HOST or http://127.0.0.1:11434)",
     )
-    parser.add_argument("--timeout", type=int, default=900, help="Per-task wall-clock timeout in seconds (default: 900)")
+    parser.add_argument("--timeout", type=int, default=480, help="Per-task wall-clock timeout in seconds (default: 480)")
     parser.add_argument("--tasks", default="", help="Optional comma-separated subset of task IDs to run")
-    parser.add_argument("--num-predict", type=int, default=24576, help="Max generation tokens per task (default: 24576)")
-    parser.add_argument("--num-ctx", type=int, default=32768, help="Context length option (default: 32768)")
+    parser.add_argument("--num-predict", type=int, default=16384, help="Max generation tokens per task (default: 16384)")
+    parser.add_argument("--num-ctx", type=int, default=24576, help="Context length option (default: 24576)")
     parser.add_argument(
         "--temperature",
         type=float,

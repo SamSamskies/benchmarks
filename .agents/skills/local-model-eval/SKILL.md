@@ -27,9 +27,9 @@ python3 evals/runner.py <model-tag-1> [<model-tag-2> ...]
 
 Useful flags:
 - `--url URL`: Target Ollama endpoint (defaults to `$OLLAMA_HOST` or `http://127.0.0.1:11434`).
-- `--timeout SECONDS`: Per-task wall-clock timeout (default `900`).
-- `--num-predict TOKENS`: Max output/thinking tokens per task (default `24576`).
-- `--num-ctx TOKENS`: Context size option (default `32768`).
+- `--timeout SECONDS`: Per-task wall-clock timeout (default `480`).
+- `--num-predict TOKENS`: Max output/thinking tokens per task (default `16384`).
+- `--num-ctx TOKENS`: Context size option (default `24576`).
 - `--temperature FLOAT`: Override sampling temperature (omit to use each model's Ollama default).
 - `--think LEVEL`: Optional Ollama `think` parameter (`low`, `medium`, `high`, `true`, `false`); omit to use each model's default.
 - `--tasks id1,id2`: Re-run a subset of tasks and merge into `eval_results/<slug>.json`.
