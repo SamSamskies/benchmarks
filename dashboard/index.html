@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Local Model Benchmark — Intelligence &amp; Time per Task</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="site-header">
+        <div class="header-main">
+          <div class="brand-lockup">
+            <span class="eyebrow">Real-World Engineering Eval</span>
+            <h1>Local Model Benchmark</h1>
+            <p class="subtitle" id="header-subtitle">
+              Deterministic 6-task suite · Intelligence Index vs. Inference Time per Task
+            </p>
+          </div>
+          <div class="header-controls">
+            <div class="meta-pills" id="meta-pills" aria-label="Evaluation environment"></div>
+            <button
+              type="button"
+              id="theme-toggle"
+              class="theme-toggle"
+              aria-label="Toggle color theme"
+              title="Toggle light/dark theme"
+            >
+              <span class="theme-icon" aria-hidden="true">◐</span>
+              <span class="theme-label">Dark</span>
+            </button>
+          </div>
+        </div>
+
+        <nav class="scope-bar" aria-label="Metric scope filter">
+          <span class="scope-label">View scope</span>
+          <div class="scope-pills" id="scope-pills" role="group" aria-label="Task filter"></div>
+        </nav>
+      </header>
+
+      <main class="main-content">
+        <section id="empty-state" class="card empty-state" hidden>
+          <h2>No evaluation runs found yet</h2>
+          <p>Run the benchmark suite on installed Ollama models to populate the charts:</p>
+          <pre><code>python3 evals/runner.py inkling-2-mini:26b-a5b-nvfp4 qwen3.8:27b-mlx</code></pre>
+        </section>
+
+        <section class="hero-charts-grid" id="hero-charts" aria-label="Primary comparison charts">
+          <article class="card chart-card">
+            <div class="card-head">
+              <div class="title-row">
+                <span class="title-swatch swatch-intelligence" aria-hidden="true"></span>
+                <h2>Intelligence</h2>
+              </div>
+              <p class="card-subtitle" id="intel-subtitle">
+                Real-World Engineering Index (0–100) · Higher is better
+              </p>
+              <p class="card-meta">
+                <span class="meta-dot" aria-hidden="true"></span>
+                <span>60 deterministic checks · Local Ollama · model default sampling</span>
+              </p>
+            </div>
+            <div class="chart-stage" id="intelligence-chart"></div>
+          </article>
+
+          <article class="card chart-card">
+            <div class="card-head">
+              <div class="title-row">
+                <span class="title-swatch swatch-time" aria-hidden="true"></span>
+                <h2>Time per Task</h2>
+              </div>
+              <p class="card-subtitle" id="time-subtitle">
+                Inference time (seconds) per benchmark task · Lower is better
+              </p>
+              <p class="card-meta">
+                <span class="meta-dot" aria-hidden="true"></span>
+                <span>Excludes cold model load time · Post-warmup</span>
+              </p>
+            </div>
+            <div class="chart-stage" id="time-chart"></div>
+          </article>
+        </section>
+
+        <section class="secondary-grid" id="secondary-grid">
+          <article class="card frontier-card">
+            <div class="card-head compact">
+              <div>
+                <h2 class="section-heading">Speed vs. Intelligence Frontier</h2>
+                <p class="card-subtitle">
+                  Mean inference time per task against composite intelligence score
+                </p>
+              </div>
+              <span class="frontier-badge">↖ Faster &amp; Smarter</span>
+            </div>
+            <div class="frontier-stage" id="frontier-chart"></div>
+          </article>
+
+          <article class="card suite-card">
+            <div class="card-head compact">
+              <div>
+                <h2 class="section-heading">Suite Tasks (60 Checks)</h2>
+                <p class="card-subtitle">
+                  Each task is scored 0–100 via 10 automated assertions
+                </p>
+              </div>
+            </div>
+            <ul class="task-overview-list" id="task-overview-list"></ul>
+          </article>
+        </section>
+
+        <section class="card matrix-card" id="matrix-section">
+          <div class="card-head compact matrix-head">
+            <div>
+              <h2 class="section-heading" id="matrix-caption">Task-by-Task Breakdown</h2>
+              <p class="card-subtitle">
+                Click column headers to sort. Click any task score to inspect assertions, output, and reasoning trace.
+              </p>
+            </div>
+          </div>
+
+          <div id="table-sort-status" role="status" class="sr-only"></div>
+
+          <div
+            tabindex="0"
+            role="region"
+            aria-labelledby="matrix-caption"
+            class="table-wrapper"
+            id="table-wrapper"
+          >
+            <table id="breakdown-table">
+              <thead>
+                <tr id="table-head-row"></tr>
+              </thead>
+              <tbody id="table-body"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <div class="footer-inner">
+          <div class="footer-cmd">
+            <span class="footer-label">Add another local model:</span>
+            <code>python3 evals/runner.py &lt;ollama-model-tag&gt;</code>
+          </div>
+          <div class="footer-info" id="footer-info"></div>
+        </div>
+      </footer>
+    </div>
+
+    <div id="chart-tooltip" class="chart-tooltip" hidden></div>
+
+    <!-- Native modal dialog per modern-web-guidance: no role="dialog" or aria-modal -->
+    <dialog id="task-modal" closedby="any" aria-labelledby="modal-title">
+      <div class="modal-shell">
+        <header class="modal-header">
+          <div class="modal-title-group">
+            <div class="modal-badges" id="modal-badges"></div>
+            <h2 id="modal-title">Task Evaluation Detail</h2>
+            <p class="modal-subtitle" id="modal-subtitle"></p>
+          </div>
+          <form method="dialog">
+            <button type="submit" class="modal-close" aria-label="Close detail dialog" autofocus>
+              ✕
+            </button>
+          </form>
+        </header>
+
+        <div class="modal-metrics" id="modal-metrics"></div>
+
+        <div class="modal-body">
+          <section class="modal-section">
+            <h3>Automated Assertions</h3>
+            <ul class="checks-list" id="modal-checks"></ul>
+          </section>
+
+          <section class="modal-section">
+            <h3>Model Output</h3>
+            <pre class="code-viewer"><code id="modal-output"></code></pre>
+          </section>
+
+          <details class="modal-details" id="modal-thinking-wrap">
+            <summary>Model Thinking Trace</summary>
+            <pre class="code-viewer trace-viewer"><code id="modal-thinking"></code></pre>
+          </details>
+
+          <details class="modal-details">
+            <summary>Task Prompt</summary>
+            <pre class="code-viewer prompt-viewer"><code id="modal-prompt"></code></pre>
+          </details>
+        </div>
+      </div>
+    </dialog>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
