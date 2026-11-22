@@ -254,6 +254,10 @@ th button:focus-visible,
   gap: 20px;
 }
 
+.hero-charts-grid.is-stacked {
+  grid-template-columns: 1fr;
+}
+
 .chart-card {
   display: flex;
   flex-direction: column;

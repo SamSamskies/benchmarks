@@ -616,6 +616,8 @@
     container.appendChild(legend);
   }
 
+  const FULL_ROW_THRESHOLD = 5;
+
   function renderCharts() {
     const models = state.data?.models || [];
     if (!models.length) return;
@@ -630,6 +632,9 @@
       intelSubtitle.textContent = `${task ? task.title : state.scope} (0–100) · Higher is better`;
       timeSubtitle.textContent = `Inference time (seconds) for ${task ? task.short_label : state.scope} · Lower is better`;
     }
+
+    // Stack charts full-width once there are enough models that half-width text gets tiny
+    document.getElementById("hero-charts").classList.toggle("is-stacked", models.length > FULL_ROW_THRESHOLD);
 
     renderBarChart({
       containerId: "intelligence-chart",
