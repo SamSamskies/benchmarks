@@ -38,10 +38,10 @@ _FALLBACK_COLORS = ["#6d4aff", "#0284c7", "#0d9488", "#be123c", "#9333ea", "#ca8
 
 
 def _resolve_brand(model_name: str, architecture: str = "") -> dict[str, str]:
-    haystack = f"{model_name} {architecture}".lower()
-    for needle, profile in _FAMILY_PROFILES:
-        if needle in haystack:
-            return dict(profile)
+    for text in (model_name.lower(), architecture.lower()):
+        for needle, profile in _FAMILY_PROFILES:
+            if needle in text:
+                return dict(profile)
     base = model_name.split(":")[0].split("/")[-1]
     letters = "".join(ch for ch in base if ch.isalpha()).upper()
     monogram = (letters[:2] or "LM").ljust(2, "X")[:2]
